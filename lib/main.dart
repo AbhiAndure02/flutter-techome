@@ -1,6 +1,11 @@
+import 'package:techhome/Screen/device.dart';
+import 'package:techhome/Screen/flash.dart';
+import 'package:techhome/Screen/insight.dart';
+import 'package:techhome/Screen/profile.dart';
+import 'package:techhome/Screen/schedule.dart';
 import 'package:flutter/material.dart';
-import 'package:my_app/Screen/home.dart';
-import 'package:my_app/Screen/timer.dart';
+import 'package:techhome/Screen/home.dart';
+import 'package:techhome/Screen/timer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Bulb Timer App',
+      title: 'techhome',
       theme: ThemeData(
         brightness: Brightness.light,
         primarySwatch: Colors.blue,
@@ -36,15 +41,35 @@ class MyApp extends StatelessWidget {
         ),
       ),
       themeMode: ThemeMode.system, // Follows system theme
-      initialRoute: '/',
+      initialRoute: '/flash',
       routes: {
         '/': (context) => const BeautifulHome(),
+        '/flash': (context) => const FlashScreen(),
         '/timer': (context) => const BulbTimerApp(),
+        '/schedule': (context) => const Schedule(),
+        '/profile': (context) => const ProfileScreen(),
+        '/insight': (context) => const InsightScreen(),
+        '/device': (context) => const DeviceScreen(),
       },
       onGenerateRoute: (settings) {
         // Handle any undefined routes
+        if (settings.name == '/schedule') {
+          return MaterialPageRoute(builder: (context) => const Schedule());
+        }
         if (settings.name == '/timer') {
           return MaterialPageRoute(builder: (context) => const BulbTimerApp());
+        }
+        if (settings.name == '/profile') {
+          return MaterialPageRoute(builder: (context) => const ProfileScreen());
+        }
+        if (settings.name == '/insight') {
+          return MaterialPageRoute(builder: (context) => const InsightScreen());
+        }
+        if (settings.name == '/device') {
+          return MaterialPageRoute(builder: (context) => const DeviceScreen());
+        }
+        if (settings.name == '/flash') {
+          return MaterialPageRoute(builder: (context) => const FlashScreen());
         }
         return null;
       },

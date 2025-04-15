@@ -1,8 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/Screen/timer.dart';
+import 'package:http/http.dart' as http;
+import 'package:techhome/Screen/device.dart';
+import 'dart:convert';
+
+import 'package:techhome/Screen/insight.dart';
+import 'package:techhome/Screen/profile.dart';
+import 'package:techhome/Screen/schedule.dart';
+import 'package:techhome/Screen/timer.dart';
 
 class BeautifulHome extends StatelessWidget {
   const BeautifulHome({super.key});
+
+  // Function to control lights via API
+  Future<void> _controlLight(
+    BuildContext context,
+    String lightId,
+    bool turnOn,
+  ) async {
+    try {
+      final url = Uri.parse('http://192.168.4.1/control');
+      final response = await http.post(
+        url,
+        body: json.encode({'device': lightId, 'state': turnOn ? 'on' : 'off'}),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Light ${turnOn ? 'on' : 'off'} successful'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to control light'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,17 +156,23 @@ class BeautifulHome extends StatelessWidget {
                     icon: Icons.lightbulb_outline,
                     name: 'Light 1',
                     isActive: true,
-                    color: Colors.amber,
+                    color: Colors.blue,
                     isSmallScreen: isSmallScreen,
                     delay: 300,
+                    onTap:
+                        (isActive) =>
+                            _controlLight(context, 'light1', !isActive),
                   ),
                   _DeviceCard(
                     icon: Icons.lightbulb_outline,
                     name: 'Light 3',
                     isActive: true,
-                    color: Colors.green,
+                    color: Colors.blue,
                     isSmallScreen: isSmallScreen,
                     delay: 400,
+                    onTap:
+                        (isActive) =>
+                            _controlLight(context, 'light3', !isActive),
                   ),
                   _DeviceCard(
                     icon: Icons.lightbulb_outline,
@@ -129,14 +181,20 @@ class BeautifulHome extends StatelessWidget {
                     color: Colors.blue,
                     isSmallScreen: isSmallScreen,
                     delay: 500,
+                    onTap:
+                        (isActive) =>
+                            _controlLight(context, 'light2', !isActive),
                   ),
                   _DeviceCard(
                     icon: Icons.lightbulb_outline,
                     name: 'Light 4',
                     isActive: true,
-                    color: Colors.purple,
+                    color: Colors.blue,
                     isSmallScreen: isSmallScreen,
                     delay: 600,
+                    onTap:
+                        (isActive) =>
+                            _controlLight(context, 'light4', !isActive),
                   ),
                 ],
               ),
@@ -177,21 +235,8 @@ class BeautifulHome extends StatelessWidget {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              PageRouteBuilder(
-                                pageBuilder:
-                                    (context, animation, secondaryAnimation) =>
-                                        const BulbTimerApp(),
-                                transitionsBuilder: (
-                                  context,
-                                  animation,
-                                  secondaryAnimation,
-                                  child,
-                                ) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: child,
-                                  );
-                                },
+                              MaterialPageRoute(
+                                builder: (context) => const BulbTimerApp(),
                               ),
                             );
                           },
@@ -205,7 +250,14 @@ class BeautifulHome extends StatelessWidget {
                           color: Colors.tealAccent,
                           size: buttonSize.toDouble(),
                           isSmallScreen: isSmallScreen,
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const Schedule(),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       FadeIn(
@@ -294,24 +346,51 @@ class BeautifulHome extends StatelessWidget {
               label: 'Home',
               isActive: true,
               isSmallScreen: isSmallScreen,
+              onPress: () {
+                // Already on home screen, no action needed
+              },
             ),
             _BottomNavItem(
               icon: Icons.devices_outlined,
               label: 'Devices',
               isActive: false,
               isSmallScreen: isSmallScreen,
+              onPress: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DeviceScreen()),
+                ).then((_) => print('Returned from device screen'));
+                // Already on home screen, no action needed
+              },
             ),
             _BottomNavItem(
               icon: Icons.insights_outlined,
               label: 'Insights',
               isActive: false,
               isSmallScreen: isSmallScreen,
+              onPress: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InsightScreen(),
+                  ),
+                ).then((_) => print('Returned from insights screen'));
+                // Already on home screen, no action needed
+              },
             ),
             _BottomNavItem(
               icon: Icons.person_outlined,
               label: 'Profile',
               isActive: false,
               isSmallScreen: isSmallScreen,
+              onPress: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
+                ).then((_) => print('Returned from profile screen'));
+              },
             ),
           ],
         ),
@@ -353,6 +432,7 @@ class _DeviceCard extends StatefulWidget {
   final Color color;
   final bool isSmallScreen;
   final int delay;
+  final Function(bool) onTap;
 
   const _DeviceCard({
     required this.icon,
@@ -361,6 +441,7 @@ class _DeviceCard extends StatefulWidget {
     required this.color,
     required this.isSmallScreen,
     required this.delay,
+    required this.onTap,
   });
 
   @override
@@ -372,6 +453,7 @@ class _DeviceCardState extends State<_DeviceCard>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
+  late bool _isActive;
 
   @override
   void initState() {
@@ -390,6 +472,7 @@ class _DeviceCardState extends State<_DeviceCard>
         curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
       ),
     );
+    _isActive = widget.isActive;
 
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
@@ -412,16 +495,10 @@ class _DeviceCardState extends State<_DeviceCard>
         opacity: _opacityAnimation,
         child: GestureDetector(
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${widget.name} tapped!'),
-                duration: const Duration(seconds: 1),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            );
+            setState(() {
+              _isActive = !_isActive;
+            });
+            widget.onTap(_isActive);
           },
           child: Container(
             decoration: BoxDecoration(
@@ -430,7 +507,7 @@ class _DeviceCardState extends State<_DeviceCard>
                 widget.isSmallScreen ? 15 : 20,
               ),
               boxShadow:
-                  widget.isActive
+                  _isActive
                       ? [
                         BoxShadow(
                           color: widget.color.withOpacity(0.3),
@@ -449,13 +526,13 @@ class _DeviceCardState extends State<_DeviceCard>
                   Icon(
                     widget.icon,
                     size: widget.isSmallScreen ? 32 : 40,
-                    color: widget.isActive ? widget.color : Colors.grey[600],
+                    color: _isActive ? widget.color : Colors.grey[600],
                   ),
                   SizedBox(height: widget.isSmallScreen ? 10 : 15),
                   Text(
                     widget.name,
                     style: TextStyle(
-                      color: widget.isActive ? Colors.white : Colors.grey[400],
+                      color: _isActive ? Colors.white : Colors.grey[400],
                       fontSize: widget.isSmallScreen ? 14 : 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -470,7 +547,7 @@ class _DeviceCardState extends State<_DeviceCard>
                     ),
                     decoration: BoxDecoration(
                       color:
-                          widget.isActive
+                          _isActive
                               ? widget.color.withOpacity(0.2)
                               : Colors.grey[800]!.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(20),
@@ -482,21 +559,15 @@ class _DeviceCardState extends State<_DeviceCard>
                           width: widget.isSmallScreen ? 8 : 10,
                           height: widget.isSmallScreen ? 8 : 10,
                           decoration: BoxDecoration(
-                            color:
-                                widget.isActive
-                                    ? widget.color
-                                    : Colors.grey[500],
+                            color: _isActive ? widget.color : Colors.grey[500],
                             shape: BoxShape.circle,
                           ),
                         ),
                         SizedBox(width: widget.isSmallScreen ? 6 : 8),
                         Text(
-                          widget.isActive ? 'Active' : 'Inactive',
+                          _isActive ? 'Active' : 'Inactive',
                           style: TextStyle(
-                            color:
-                                widget.isActive
-                                    ? widget.color
-                                    : Colors.grey[500],
+                            color: _isActive ? widget.color : Colors.grey[500],
                             fontSize: widget.isSmallScreen ? 12 : 14,
                           ),
                         ),
@@ -652,33 +723,38 @@ class _BottomNavItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final bool isSmallScreen;
+  final VoidCallback onPress;
 
   const _BottomNavItem({
     required this.icon,
     required this.label,
     required this.isActive,
     required this.isSmallScreen,
+    required this.onPress,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          size: isSmallScreen ? 24 : 28,
-          color: isActive ? Colors.white : Colors.white54,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
+    return InkWell(
+      onTap: onPress,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: isSmallScreen ? 24 : 28,
             color: isActive ? Colors.white : Colors.white54,
-            fontSize: isSmallScreen ? 10 : 12,
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isActive ? Colors.white : Colors.white54,
+              fontSize: isSmallScreen ? 10 : 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

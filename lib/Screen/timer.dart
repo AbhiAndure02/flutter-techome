@@ -13,25 +13,9 @@ class BulbTimerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bulb Timer',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.blue,
+      theme: ThemeData.dark().copyWith(
         visualDensity: VisualDensity.adaptivePlatformDensity,
         useMaterial3: true,
-        appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
         cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -43,8 +27,17 @@ class BulbTimerApp extends StatelessWidget {
           backgroundColor: Colors.blue.withOpacity(0.2),
           labelStyle: const TextStyle(color: Colors.blue),
         ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.black,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: IconThemeData(color: Colors.white),
+        ),
+        scaffoldBackgroundColor: Colors.black,
       ),
-      themeMode: ThemeMode.system, // Automatically switch between light/dark
       home: const TimerScreen(),
     );
   }
@@ -60,7 +53,6 @@ class TimerScreen extends StatefulWidget {
 class _TimerScreenState extends State<TimerScreen>
     with TickerProviderStateMixin {
   late final List<BulbTimer> _bulbs;
-  bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -99,23 +91,13 @@ class _TimerScreenState extends State<TimerScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    _isDarkMode = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bulb Timer Control'),
-        actions: [
-          IconButton(
-            icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () {
-              // This would require a state management solution to properly toggle
-              // For now it will follow system theme
-            },
-          ),
-        ],
+        centerTitle: true,
       ),
       body: Padding(
         padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
@@ -125,19 +107,19 @@ class _TimerScreenState extends State<TimerScreen>
               child: ListView.builder(
                 itemCount: _bulbs.length,
                 itemBuilder: (context, index) {
-                  return _buildBulbControl(_bulbs[index], isSmallScreen, theme);
+                  return _buildBulbControl(_bulbs[index], isSmallScreen);
                 },
               ),
             ),
             const SizedBox(height: 16),
-            _buildActionButtons(isSmallScreen, theme),
+            _buildActionButtons(isSmallScreen),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButtons(bool isSmallScreen, ThemeData theme) {
+  Widget _buildActionButtons(bool isSmallScreen) {
     final anyActive = _bulbs.any((b) => b.isActive && b.timeInMinutes > 0);
 
     final buttonStyle = ElevatedButton.styleFrom(
@@ -182,13 +164,6 @@ class _TimerScreenState extends State<TimerScreen>
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: AnimatedScale(
-                  duration: const Duration(milliseconds: 200),
-                  scale: anyActive ? 1 : 0.9,
-                ),
-              ),
             ],
           ),
         ],
@@ -225,38 +200,12 @@ class _TimerScreenState extends State<TimerScreen>
               child: const Text('RESET ALL', style: TextStyle(fontSize: 16)),
             ),
           ),
-          AnimatedScale(
-            duration: const Duration(milliseconds: 200),
-            scale: anyActive ? 1 : 0.9,
-            child: ElevatedButton(
-              onPressed:
-                  anyActive
-                      ? () {
-                        Navigator.pushNamed(context, '/timer');
-                      }
-                      : null,
-              style: buttonStyle.copyWith(
-                backgroundColor: MaterialStateProperty.all(Colors.green),
-                foregroundColor: MaterialStateProperty.all(Colors.white),
-                padding: MaterialStateProperty.all(
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                ),
-              ),
-              child: const Text('GO TO TIMER', style: TextStyle(fontSize: 16)),
-            ),
-          ),
         ],
       );
     }
   }
 
-  Widget _buildBulbControl(
-    BulbTimer bulb,
-    bool isSmallScreen,
-    ThemeData theme,
-  ) {
-    final isDark = theme.brightness == Brightness.dark;
-
+  Widget _buildBulbControl(BulbTimer bulb, bool isSmallScreen) {
     return AnimatedPadding(
       duration: const Duration(milliseconds: 300),
       padding: EdgeInsets.only(bottom: bulb.isRunning ? 16 : 8),
@@ -271,10 +220,10 @@ class _TimerScreenState extends State<TimerScreen>
                 children: [
                   Text(
                     bulb.name,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: theme.textTheme.titleLarge?.color,
+                      color: Colors.white,
                     ),
                   ),
                   AnimatedSwitcher(
@@ -284,9 +233,7 @@ class _TimerScreenState extends State<TimerScreen>
                             ? Chip(
                               label: Text(
                                 '${bulb.timeInMinutes} min remaining',
-                                style: TextStyle(
-                                  color: theme.chipTheme.labelStyle?.color,
-                                ),
+                                style: const TextStyle(color: Colors.blue),
                               ),
                             )
                             : const SizedBox.shrink(),
@@ -295,8 +242,8 @@ class _TimerScreenState extends State<TimerScreen>
               ),
               const SizedBox(height: 16),
               isSmallScreen
-                  ? _buildSmallScreenLayout(bulb, theme, isDark)
-                  : _buildLargeScreenLayout(bulb, theme, isDark),
+                  ? _buildSmallScreenLayout(bulb)
+                  : _buildLargeScreenLayout(bulb),
             ],
           ),
         ),
@@ -304,10 +251,9 @@ class _TimerScreenState extends State<TimerScreen>
     );
   }
 
-  Widget _buildSmallScreenLayout(BulbTimer bulb, ThemeData theme, bool isDark) {
+  Widget _buildSmallScreenLayout(BulbTimer bulb) {
     return Column(
       children: [
-        // Bulb visualization
         Center(
           child: GestureDetector(
             onTap: () {
@@ -324,9 +270,7 @@ class _TimerScreenState extends State<TimerScreen>
                 color:
                     bulb.isActive
                         ? Colors.yellow.withOpacity(0.8)
-                        : (isDark
-                            ? Colors.grey[800]
-                            : Colors.grey.withOpacity(0.3)),
+                        : Colors.grey[800],
                 boxShadow:
                     bulb.isActive
                         ? [
@@ -341,16 +285,12 @@ class _TimerScreenState extends State<TimerScreen>
               child: Icon(
                 Icons.lightbulb,
                 size: 30,
-                color:
-                    bulb.isActive
-                        ? Colors.amber
-                        : (isDark ? Colors.grey[400] : Colors.grey),
+                color: bulb.isActive ? Colors.amber : Colors.grey[400],
               ),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        // Time controls
         Row(
           children: [
             Expanded(
@@ -362,9 +302,7 @@ class _TimerScreenState extends State<TimerScreen>
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
                   labelText: 'Minutes',
-                  labelStyle: TextStyle(
-                    color: theme.textTheme.labelLarge?.color,
-                  ),
+                  labelStyle: const TextStyle(color: Colors.white70),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -373,7 +311,7 @@ class _TimerScreenState extends State<TimerScreen>
                     vertical: 14,
                   ),
                 ),
-                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                style: const TextStyle(color: Colors.white),
                 onChanged: (value) {
                   bulb.timeInMinutes = int.tryParse(value) ?? 0;
                 },
@@ -475,10 +413,9 @@ class _TimerScreenState extends State<TimerScreen>
     );
   }
 
-  Widget _buildLargeScreenLayout(BulbTimer bulb, ThemeData theme, bool isDark) {
+  Widget _buildLargeScreenLayout(BulbTimer bulb) {
     return Row(
       children: [
-        // Bulb visualization
         GestureDetector(
           onTap: () {
             setState(() {
@@ -494,9 +431,7 @@ class _TimerScreenState extends State<TimerScreen>
               color:
                   bulb.isActive
                       ? Colors.yellow.withOpacity(0.8)
-                      : (isDark
-                          ? Colors.grey[800]
-                          : Colors.grey.withOpacity(0.3)),
+                      : Colors.grey[800],
               boxShadow:
                   bulb.isActive
                       ? [
@@ -511,10 +446,7 @@ class _TimerScreenState extends State<TimerScreen>
             child: Icon(
               Icons.lightbulb,
               size: 30,
-              color:
-                  bulb.isActive
-                      ? Colors.amber
-                      : (isDark ? Colors.grey[400] : Colors.grey),
+              color: bulb.isActive ? Colors.amber : Colors.grey[400],
             ),
           ),
         ),
@@ -523,7 +455,6 @@ class _TimerScreenState extends State<TimerScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Time controls
               Row(
                 children: [
                   Expanded(
@@ -535,9 +466,7 @@ class _TimerScreenState extends State<TimerScreen>
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
                         labelText: 'Minutes',
-                        labelStyle: TextStyle(
-                          color: theme.textTheme.labelLarge?.color,
-                        ),
+                        labelStyle: const TextStyle(color: Colors.white70),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -546,7 +475,7 @@ class _TimerScreenState extends State<TimerScreen>
                           vertical: 14,
                         ),
                       ),
-                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                      style: const TextStyle(color: Colors.white),
                       onChanged: (value) {
                         bulb.timeInMinutes = int.tryParse(value) ?? 0;
                       },
@@ -678,7 +607,6 @@ class BulbTimer {
     if (timeInMinutes > 0 && isActive) {
       isRunning = true;
       _controller.repeat(reverse: true);
-      // In a real app, you would start an actual countdown timer here
     }
   }
 
